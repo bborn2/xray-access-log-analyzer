@@ -108,7 +108,7 @@ def analyze () :
             logger.info(count)
             
     get_global_top_target(user_targets)
-            
+    get_user_top(user_targets)
 
 
 def get_global_top_target(user_targets):
@@ -122,8 +122,21 @@ def get_global_top_target(user_targets):
     for target, count in global_top:
         domain = utils.reverse_dns_lookup(target)
         
-        logger.info(f"{target} -> {count} 次, {domain}")    
+        asn = utils.get_ip_asn(target)
+        
+        logger.info(f"{target} -> {count} 次, {domain}, {asn}")    
 
+def get_user_top(user_targets):
+    ip_access_counts = {ip: len(sites) for ip, sites in user_targets.items()}
+    top_n = 10
+    for ip, count in sorted(ip_access_counts.items(), key=lambda x: x[1], reverse=True)[:top_n]:
+        
+        loc = utils.get_ip_location(ip)
+        asn = utils.get_ip_asn(ip)
+        
+        logger.info(f"{ip} -> {count} 次, {loc}, {asn}" )
+        
+    
     
 import socket
 if __name__ == "__main__":
