@@ -1,33 +1,17 @@
-import dns.resolver
-import dns.reversename
 from loguru import logger
 import ipaddress
 import geoip2.database
 from geoip2.errors import AddressNotFoundError
 import socket
 import matplotlib.pyplot as plt
+import re
 
-def reverse_dns_lookup(ip):
-    
-    realip = is_ip_address(ip)
-    if realip is None:
-        # logger.error("{} is not ip", ip)
-        return None
-    
-    try:
-        rev_name = dns.reversename.from_address(realip)
-        
-        answer = dns.resolver.resolve(rev_name, "PTR")
-        return str(answer[0])
-    except Exception as e:
-        return None
+ 
     
 def is_ip_address(addr: str) -> bool:
-    host = addr.split(":")[0]
-    
     try:
-        ipaddress.ip_address(host)
-        return host
+        ipaddress.ip_address(addr)
+        return addr
     except ValueError:
         return None
     
@@ -84,14 +68,35 @@ def get_host_by_name(domain):
         return ip
     except Exception as e:
         return None
-    
-def get_domain_asn(domian : str):
-    ip = get_host_by_name(domian.split(":")[0])
-    
-    if ip is None:
-        return None
-    
-    return get_ip_asn(ip)
+
+region_asn_cache = {}
+
+def get_region_and_asn(ip):
+    if ip == "Unknown IP":
+        return "Unknown Country, Unknown Region, Unknown ASN"
+    if ip in region_asn_cache:
+        return region_asn_cache[ip]
+
+    unknown_country = "Unknown Country"
+    unknown_region = "Unknown Region"
+    try:
+        city_response = reader_city.city(ip)
+        country = city_response.country.name or unknown_country
+        region = city_response.subdivisions.most_specific.name or unknown_region
+    except Exception:
+        country, region = unknown_country, unknown_region
+
+    unknown_asn = "Unknown ASN"
+    try:
+        asn_response = reader_asn.asn(ip)
+        asn = f"AS{asn_response.autonomous_system_number} {asn_response.autonomous_system_organization}"
+    except Exception:
+        asn = unknown_asn
+
+    result = f"{country}, {region}, {asn}"
+    region_asn_cache[ip] = result
+    return result
+
 
 def draw(hourly_counts):
 
@@ -113,3 +118,27 @@ def draw(hourly_counts):
     plt.tight_layout()
     # plt.show()
     plt.savefig("access_per_hour.png", dpi=300)
+    
+     
+
+def strip_port(host: str) -> str:
+    # IPv6 带方括号：[::1]:443
+    if host.startswith('['):
+        match = re.match(r'^\[(.*)\](?::\d+)?$', host)
+        if match:
+            return match.group(1)
+
+    # 如果 host 是合法的 IP（v4 或 v6），说明没有端口
+    try:
+        ipaddress.ip_address(host)
+        return host
+    except ValueError:
+        pass
+
+    # 如果是域名或IPv4带端口，如 google.com:443 / 1.2.3.4:443
+    if ':' in host:
+        parts = host.rsplit(':', 1)
+        if parts[1].isdigit():
+            return parts[0]
+
+    return host
