@@ -3,8 +3,7 @@ import os
 import re
 from loguru import logger
 from collections import defaultdict, Counter
-import dns.resolver
-import dns.reversename
+from datetime import datetime
 
 import utils
 
@@ -13,6 +12,7 @@ logger.add("log", rotation="10 MB")
 
 def analyze () :
     user_targets = defaultdict(list)
+    hourly_counts = defaultdict(int)
     
    
     # user_phone =  {"default" : ["0"  , "1"]}
@@ -57,7 +57,14 @@ def analyze () :
                 if parts[2] == "DNS" : 
                     continue
                 
+                time_str = line[:19]
                 
+                dt = datetime.strptime(time_str, "%Y/%m/%d %H:%M:%S")
+          
+                hour_key = dt.strftime("%Y-%m-%d %H")
+                 
+                hourly_counts[hour_key] += 1
+                        
                 ip_port = parts[3]
     
                 # 有些行开头多了 tcp:，先去掉 tcp: 前缀
@@ -109,6 +116,13 @@ def analyze () :
             
     get_global_top_target(user_targets)
     get_user_top(user_targets)
+    
+    for hour, count in sorted(hourly_counts.items()):
+        logger.info(f"{hour}:00 - {count} 次访问")
+        
+    utils.draw(hourly_counts)
+        
+
 
 
 def get_global_top_target(user_targets):
@@ -122,7 +136,7 @@ def get_global_top_target(user_targets):
     for target, count in global_top:
         domain = utils.reverse_dns_lookup(target)
         
-        asn = utils.get_ip_asn(target)
+        asn = utils.get_domain_asn(target)
         
         logger.info(f"{target} -> {count} 次, {domain}, {asn}")    
 
@@ -141,12 +155,4 @@ def get_user_top(user_targets):
 import socket
 if __name__ == "__main__":
     analyze()
-    
-    ips = ["149.154.167.41"]
 
-    for ip in ips:
-        try:
-            domain = socket.gethostbyaddr(ip)
-            print(f"{ip} -> {domain[0]}")
-        except socket.herror:
-            print(f"{ip} -> 无法解析")

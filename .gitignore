@@ -8,3 +8,4 @@ p_user.txt
 __pycache__
 *.mmdb
 log.*
+access_per_hour.png
