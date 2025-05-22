@@ -142,3 +142,15 @@ def strip_port(host: str) -> str:
             return parts[0]
 
     return host
+
+def format_top_target(data) -> str:
+    lines = []
+    lines.append("目标地址".ljust(28) + "次数".ljust(8) + "组织/公司")
+    lines.append("-" * 60)
+    for ip, count, org in data:
+        org_name = org if org else "None"
+        lines.append(f"{ip.ljust(28)}{str(count).ljust(8)}{org_name}")
+
+    formatted = "\n".join(lines)
+    msg = f"访问量最多的前 10 个目标：\n\n```{formatted}```"
+    return msg

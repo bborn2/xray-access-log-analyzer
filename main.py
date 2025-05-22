@@ -4,8 +4,12 @@ import re
 from loguru import logger
 from collections import defaultdict, Counter
 from datetime import datetime
+import bot
 import config
 import utils
+from dotenv import load_dotenv
+
+load_dotenv() 
 
 logger.add("log", rotation="10 MB", retention=5)  
 
@@ -111,13 +115,20 @@ def get_top_target(user_targets):
 
     global_top = Counter(all_targets).most_common(N)
     logger.info(f"\n🌐 全部用户访问量最多的前 {N} 个目标：")
+    
+    data = []
     for target, count in global_top:
         
         asn = None
         if utils.is_ip_address(target):
             asn = utils.get_ip_asn(target)
         
-        logger.info(f"{target} -> {count} 次,  {asn }")    
+        logger.info(f"{target} -> {count} 次,  {asn }")
+        
+        data.append((target, count, asn.get('Organization') if asn else 'None' ))
+        
+    msg = utils.format_top_target(data)
+    bot.split_and_send(msg)
 
 def get_top_user(user_targets):
     ip_access_counts = {ip: len(sites) for ip, sites in user_targets.items()}
