@@ -1,10 +1,17 @@
+import time
+
+import requests
 from telegram import Bot
 from telegram.constants import ParseMode
 import asyncio
 from telegram.error import TelegramError
 from loguru import logger
 import os
- 
+from dotenv import load_dotenv
+import io
+
+load_dotenv() 
+
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 
@@ -24,17 +31,58 @@ def split_and_send(message: str, max_length: int = 4000):
         chunks.append(current)
 
     for chunk in chunks:
-        asyncio.run(send(f"```{chunk}```"))
+        send(f"{chunk}")
 
-async def send(str): 
+def send_msg(str): 
+
+    try:
+        url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
+
+        payload = {
+            'chat_id': CHAT_ID,
+            'text': str
+        }
+        response = requests.post(url, data=payload)
+        logger.info(response)
+        
+    except Exception as e:
+        logger.error(f"send message err: {e}")
+        
+def send_file(text : str, title : str):
     
     try:
-        await bot.send_message(
-            chat_id=CHAT_ID,
-            text=str,
-            parse_mode=ParseMode.MARKDOWN
+        file_like = io.StringIO(text)
+        file_like.name = title
+
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument"
+        response = requests.post(
+            url,
+            data={"chat_id": CHAT_ID},
+            files={"document": (file_like.name, file_like, "text/plain")}
         )
-    except TelegramError as e:
-        logger.error(f"Telegram API 错误: {e}")
+
+        if response.status_code == 200:
+            logger.info(f"send file {title} ok")
+        else:
+            logger.error(f"send file {title} err")
+            
     except Exception as e:
-        logger.error(f"发生其他错误: {e}")
+        logger.error(f"send file except: {e}")
+
+def send_photo(buf :io.BytesIO, title): 
+    
+    try:
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto"
+
+        files = {'photo': (title, buf, 'image/png')}
+        data = {'chat_id': CHAT_ID}
+
+        response = requests.post(url, files=files, data=data)
+            
+        if response.status_code == 200:
+            logger.info(f"send photo {title} ok")
+        else:
+            logger.error(f"send photo {title} err")
+            
+    except Exception as e:
+        logger.error(f"send photo err: {e}")

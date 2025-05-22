@@ -5,9 +5,8 @@ from geoip2.errors import AddressNotFoundError
 import socket
 import matplotlib.pyplot as plt
 import re
+import io
 
- 
-    
 def is_ip_address(addr: str) -> bool:
     try:
         ipaddress.ip_address(addr)
@@ -98,7 +97,7 @@ def get_region_and_asn(ip):
     return result
 
 
-def draw(hourly_counts):
+def draw(hourly_counts) -> io.BytesIO:
 
     sorted_hours = sorted(hourly_counts.items())
 
@@ -119,6 +118,11 @@ def draw(hourly_counts):
     # plt.show()
     plt.savefig("access_per_hour.png", dpi=300)
     
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    plt.close()
+    buf.seek(0)
+    return buf
      
 
 def strip_port(host: str) -> str:
@@ -145,12 +149,22 @@ def strip_port(host: str) -> str:
 
 def format_top_target(data) -> str:
     lines = []
-    lines.append("目标地址".ljust(28) + "次数".ljust(8) + "组织/公司")
-    lines.append("-" * 60)
-    for ip, count, org in data:
-        org_name = org if org else "None"
-        lines.append(f"{ip.ljust(28)}{str(count).ljust(8)}{org_name}")
+    for target, count, org in data:
+        org_str = org if org and org != 'None' else 'Unknown'
+        lines.append(f"{target:<40} {count:>5}    {org_str}")
 
-    formatted = "\n".join(lines)
-    msg = f"访问量最多的前 10 个目标：\n\n```{formatted}```"
-    return msg
+    return "\n".join(lines)
+
+def escape_markdown_v2(text: str) -> str:
+    special_chars = r'_*[]()~`>#+-=|{}.!'
+    for ch in special_chars:
+        text = text.replace(ch, f'\\{ch}')
+    return text
+
+def format_top_user(data) -> str:
+    header = f"{'IP':<17} {'Count':<6} {'Country':<10} {'City':<15} {'Org'}\n"
+    lines = [header, "-" * 80]
+    for ip, count, country, city, org in data:
+        city = city if city else "-"
+        lines.append(f"{ip:<17} {count:<6} {country:<10} {city:<15} {org}")
+    return "\n".join(lines)
