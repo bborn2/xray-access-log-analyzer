@@ -5,4 +5,4 @@ top_N_target = 50
 
 top_N_user = 50
 
-log_dir = "./shell/logs"
+# log_dir = "./shell/logs"

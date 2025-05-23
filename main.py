@@ -9,23 +9,29 @@ import config
 import utils
 from dotenv import load_dotenv
 import shutil
+import sys
 
 load_dotenv() 
 
-logger.add("log", rotation="10 MB", retention=5)  
+logger.add("log", rotation="10 MB", retention=5)
 
-def analyze () :
+def analyze (log_dir) :
+    logger.info(f"log dir {log_dir}")
+    
     user_targets = defaultdict(list)
     hourly_counts = defaultdict(int)
 
     log_pattern = re.compile(r'access-.+\.log')
 
     count = 0
+    lognames = []
 
-    for filename in os.listdir(config.log_dir):
-        logger.debug(filename)
+    for filename in os.listdir(log_dir):
+        
+        lognames.append(filename)
+
         if log_pattern.match(filename):
-            filepath = os.path.join(config.log_dir, filename)
+            filepath = os.path.join(log_dir, filename)
             
             logger.info(f"load {filename}")
             
@@ -50,6 +56,8 @@ def analyze () :
 
     today = datetime.today()
     date_str = today.strftime("%Y-%m-%d")
+    
+    bot.send_msg( date_str + "\n\n" + str(len(lognames)) + " logs\n\n" + "\n".join(lognames))
 
     bot.send_file(utils.format_top_target(get_top_target(user_targets)), f"top target - {date_str}.txt")
     
@@ -157,11 +165,17 @@ def get_timeline_image(hourly_counts):
     return utils.draw(hourly_counts)
 
 if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python main.py <log_directory>")
+        sys.exit(1)
+
+    log_dir = sys.argv[1]
+
     try:
-        analyze()
+        analyze(log_dir)
     except Exception as e:
         logger.error(f"err: {e}")
     finally:
-        shutil.rmtree(config.log_dir)
-        logger.info(f"rm {config.log_dir}")
+        shutil.rmtree(log_dir)
+        logger.info(f"rm {log_dir}")
     logger.info("==========end=============")
