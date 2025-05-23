@@ -1,10 +1,4 @@
-import time
-
 import requests
-from telegram import Bot
-from telegram.constants import ParseMode
-import asyncio
-from telegram.error import TelegramError
 from loguru import logger
 import os
 from dotenv import load_dotenv
