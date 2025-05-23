@@ -8,6 +8,7 @@ import bot
 import config
 import utils
 from dotenv import load_dotenv
+import shutil
 
 load_dotenv() 
 
@@ -156,5 +157,11 @@ def get_timeline_image(hourly_counts):
     return utils.draw(hourly_counts)
 
 if __name__ == "__main__":
-    analyze()
-
+    try:
+        analyze()
+    except Exception as e:
+        logger.error(f"err: {e}")
+    finally:
+        shutil.rmtree(config.log_dir)
+        logger.info(f"rm {config.log_dir}")
+    logger.info("==========end=============")
