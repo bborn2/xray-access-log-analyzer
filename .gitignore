@@ -10,3 +10,4 @@ __pycache__
 log.*
 access_per_hour.png
 .env
+/shell

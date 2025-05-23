@@ -4,3 +4,5 @@ ignore_urls = ["1.1.1.1"  , "mtalk.google.com" , "android.apis.google.com" , "dn
 top_N_target = 50
 
 top_N_user = 50
+
+log_dir = "./shell/logs"

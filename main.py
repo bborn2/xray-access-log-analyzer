@@ -17,23 +17,35 @@ def analyze () :
     user_targets = defaultdict(list)
     hourly_counts = defaultdict(int)
 
-    path_log = "./access.log"
-     
-    with open (path_log , "r") as file :
-        for line in file :
-            
-            ret = parse_line(line)
-            
-            if ret is None:
-                # logger.info(f"{line} - None")
-                continue
-            
-            dt, fr, to = ret
-            
-            hour_key = dt.strftime("%Y-%m-%d %H")
-            hourly_counts[hour_key] += 1
+    log_pattern = re.compile(r'access-.+\.log')
 
-            user_targets[fr].append(to)
+    count = 0
+
+    for filename in os.listdir(config.log_dir):
+        logger.debug(filename)
+        if log_pattern.match(filename):
+            filepath = os.path.join(config.log_dir, filename)
+            
+            logger.info(f"load {filename}")
+            
+            with open(filepath, 'r', errors='ignore') as f:
+                for line in f :
+                    count += 1
+
+                    ret = parse_line(line)
+
+                    if ret is None:
+                        # logger.info(f"{line} - None")
+                        continue
+
+                    dt, fr, to = ret
+
+                    hour_key = dt.strftime("%Y-%m-%d %H")
+                    hourly_counts[hour_key] += 1
+
+                    user_targets[fr].append(to)
+
+    logger.debug(count)
 
     today = datetime.today()
     date_str = today.strftime("%Y-%m-%d")
