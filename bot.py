@@ -1,10 +1,7 @@
 import requests
 from loguru import logger
 import os
-from dotenv import load_dotenv
 import io
-
-load_dotenv() 
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")

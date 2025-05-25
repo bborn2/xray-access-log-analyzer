@@ -9,6 +9,7 @@ import utils
 from dotenv import load_dotenv
 import shutil
 import sys
+import mail
 
 load_dotenv() 
 
@@ -56,15 +57,36 @@ def analyze (log_dir) :
     today = datetime.today()
     date_str = today.strftime("%Y-%m-%d")
     
-    bot.send_msg( date_str + "\n\n" + str(len(lognames)) + " logs\n\n" + "\n".join(lognames))
-
-    bot.send_file(utils.format_top_target(get_top_target(user_targets)), f"top target - {date_str}.txt")
+    contents = date_str + "\n\n" + str(len(lognames)) + " logs\n\n" + "\n".join(lognames)
     
-    bot.send_file(utils.format_top_user(get_top_user(user_targets)), f"top user 50 - {date_str}.txt")
+    bot.send_msg( contents )
 
-    bot.send_msg(get_top_user_country(user_targets))
+    contents += f"\n==========\n\ntop target\n---------\n\n"
+    toptarget = utils.format_top_target(get_top_target(user_targets))
+    contents += toptarget
     
-    bot.send_photo(get_timeline_image(hourly_counts), f"chart-{date_str}.png")
+    bot.send_file(toptarget, f"top target - {date_str}.txt")
+    
+    contents += "\n==========\n\ntop user\n----------\n\n"
+    topuser = utils.format_top_user(get_top_user(user_targets))
+    contents += topuser
+    
+    bot.send_file(topuser, f"top user - {date_str}.txt")
+    
+    contents += "\n==========\n\ntop country\n---------\n\n"
+    topcountry = get_top_user_country(user_targets)
+    contents += topcountry
+
+    bot.send_msg(topcountry)
+    
+    image_buffer = get_timeline_image(hourly_counts)
+    bot.send_photo(image_buffer, f"chart-{date_str}.png")
+    
+    fr = os.getenv("MAIL_FROM")
+    to = os.getenv("MAIL_TO")
+    
+    mail.send_email(fr=fr, to=to, subject=f"network stat: {date_str}", content=contents, image_buffer=image_buffer)
+    
         
 def parse_line(line : str):
     pattern = r"email: (\S+)"
@@ -164,6 +186,7 @@ def get_timeline_image(hourly_counts):
     return utils.draw(hourly_counts)
 
 if __name__ == "__main__":
+     
     if len(sys.argv) < 2:
         print("Usage: python main.py <log_directory>")
         sys.exit(1)
