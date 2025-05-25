@@ -5,6 +5,9 @@ from loguru import logger
 from email.utils import make_msgid
 from io import BytesIO
 from PIL import Image
+from dotenv import load_dotenv
+
+load_dotenv() 
 
 MAIL_LOGIN_USER = os.getenv("MAIL_LOGIN_USER")
 MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
@@ -42,15 +45,15 @@ def send_email(fr, to, subject, content, image_buffer):
     smtp_server = MAIL_SERVER
     smtp_port = 587
 
-    your_email = MAIL_LOGIN_USER
-    your_app_password = MAIL_PASSWORD
+    login_user = MAIL_LOGIN_USER
+    login_password = MAIL_PASSWORD
     
-    logger.info(msg)
+    logger.info(smtp_server)
 
     try:
         with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.starttls()
-            server.login(your_email, your_app_password)
+            server.login(login_user, login_password)
             server.send_message(msg)
             logger.info("mail send ok")
     except Exception as e:

@@ -2,6 +2,9 @@ import requests
 from loguru import logger
 import os
 import io
+from dotenv import load_dotenv
+
+load_dotenv() 
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
@@ -71,7 +74,7 @@ def send_photo(buf :io.BytesIO, title):
         if response.status_code == 200:
             logger.info(f"send photo {title} ok")
         else:
-            logger.error(f"send photo {title} err")
+            logger.error(f"send photo {title} err, {response.status_code}")
             
     except Exception as e:
         logger.error(f"send photo err: {e}")

@@ -200,7 +200,5 @@ if __name__ == "__main__":
         analyze(log_dir)
     except Exception as e:
         logger.error(f"err: {e}")
-    finally:
-        shutil.rmtree(log_dir)
-        logger.info(f"rm {log_dir}")
+
     logger.info("==========end=============")
