@@ -80,6 +80,9 @@ def analyze (log_dir) :
     bot.send_msg(topcountry)
     
     image_buffer = get_timeline_image(hourly_counts)
+    
+    logger.info("image buffer len = {}", len(image_buffer.getvalue()))
+    
     bot.send_photo(image_buffer, f"chart-{date_str}.png")
     
     fr = os.getenv("MAIL_FROM")
