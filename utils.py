@@ -116,7 +116,7 @@ def draw(hourly_counts) -> io.BytesIO:
     plt.grid(True)
     plt.tight_layout()
     # plt.show()
-    plt.savefig("access_per_hour.png", dpi=300)
+    # plt.savefig("access_per_hour.png", dpi=300)
     
     buf = io.BytesIO()
     plt.savefig(buf, format='png')
