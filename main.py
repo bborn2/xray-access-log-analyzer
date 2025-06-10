@@ -88,7 +88,7 @@ def analyze (log_dir) :
     fr = os.getenv("MAIL_FROM")
     to = os.getenv("MAIL_TO")
     
-    #mail.send_email(fr=fr, to=to, subject=f"network stat: {date_str}", content=contents, image_buffer=image_buffer)
+    mail.send_email(fr=fr, to=to, subject=f"network stat: {date_str}", content=contents, image_buffer=image_buffer)
     
         
 def parse_line(line : str):
