@@ -11,3 +11,4 @@ log.*
 access_per_hour.png
 .env
 /shell
+service_account.json

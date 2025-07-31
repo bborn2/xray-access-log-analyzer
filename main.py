@@ -13,6 +13,8 @@ import config
 import mail
 import utils
 
+import sheet
+
 load_dotenv()
 
 logger.add("log", rotation="10 MB", retention=5)
@@ -77,7 +79,7 @@ def analyze (log_dir) :
     bot.send_file(topuser, f"top user - {date_str}.txt")
 
     contents += "\n==========\n\ntop country\n---------\n\n"
-    topcountry = get_top_user_country(user_targets)
+    topcountry, totaluser = get_top_user_country(user_targets)
     contents += topcountry
 
     bot.send_msg(topcountry)
@@ -93,6 +95,7 @@ def analyze (log_dir) :
 
     mail.send_email(fr=fr, to=to, subject=f"network stat: {date_str}", content=contents, image_buffer=image_buffer)
 
+    sheet.update_google_sheet(date_str, totaluser)
 
 def parse_line(line : str):
     pattern = r"email: (\S+)"
@@ -186,9 +189,9 @@ def get_top_user_country(user_targets) -> str:
         total_count += count
         logger.info(f"{country}: {count}")
 
-    data += f"---------\ntotal:{total_count}"
+    data += f"---------\ntotal:{total_count}/{sum(country_counter.values())}"
 
-    return data
+    return data, sum(country_counter.values())
 
 def get_timeline_image(hourly_counts):
     for hour, count in sorted(hourly_counts.items()):
