@@ -3,7 +3,7 @@ import re
 import shutil
 import sys
 from collections import Counter, defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from dotenv import load_dotenv
 from loguru import logger
@@ -11,9 +11,8 @@ from loguru import logger
 import bot
 import config
 import mail
-import utils
-
 import sheet
+import utils
 
 load_dotenv()
 
@@ -51,16 +50,18 @@ def analyze (log_dir) :
 
                     dt, fr, to = ret
 
-                    hour_key = dt.strftime("%Y-%m-%d %H")
+                    hour_key = dt.strftime("%Y/%m/%d %H")
                     hourly_counts[hour_key] += 1
 
                     user_targets[fr].append(to)
 
-    logger.debug(count)
+    logger.debug(f"count={count}")
+
+    logger.debug(f"user targets = {len(user_targets)}")
 
     yesterday = datetime.today() - timedelta(days=1)
 
-    date_str = yesterday.strftime("%Y-%m-%d")
+    date_str = yesterday.strftime("%Y/%m/%d")
 
     contents = date_str + "\n\n" + str(len(lognames)) + " logs\n\n" + "\n".join(lognames)
 
@@ -79,8 +80,10 @@ def analyze (log_dir) :
     bot.send_file(topuser, f"top user - {date_str}.txt")
 
     contents += "\n==========\n\ntop country\n---------\n\n"
-    topcountry, totaluser = get_top_user_country(user_targets)
+    topcountry = get_top_user_country(user_targets)
     contents += topcountry
+
+    logger.debug(f"total = {len(user_targets)}")
 
     bot.send_msg(topcountry)
 
@@ -95,37 +98,34 @@ def analyze (log_dir) :
 
     mail.send_email(fr=fr, to=to, subject=f"network stat: {date_str}", content=contents, image_buffer=image_buffer)
 
-    sheet.update_google_sheet(date_str, totaluser)
+    sheet.update_google_sheet(date_str, len(user_targets))
 
 def parse_line(line : str):
-    pattern = r"email: (\S+)"
 
-    if re.findall(pattern, line):
-        for url in config.ignore_urls:
-            if url in line:
-                return None
-
-        parts = line.split()
-
-        if parts[2] == "DNS":
+    for url in config.ignore_urls:
+        if url in line:
             return None
 
-        time_str = line[:19]
-        dt = datetime.strptime(time_str, "%Y/%m/%d %H:%M:%S")
+    parts = line.split()
 
-        ip_port = parts[3]
-
-        if ip_port.startswith("tcp:") or ip_port.startswith("udp:"):
-            ip_port = ip_port.split(":", 1)[1]
-
-        dest = parts[5]
-        if dest.startswith("tcp:") or dest.startswith("udp:"):
-            dest = dest.split(":", 1)[1]
-
-        return dt, utils.strip_port(ip_port), utils.strip_port(dest)
-
-    else:
+    if parts[2] == "DNS":
         return None
+
+    time_str = line[:19]
+    dt = datetime.strptime(time_str, "%Y/%m/%d %H:%M:%S")
+
+    ip_port = parts[3]
+
+    if ip_port.startswith("tcp:") or ip_port.startswith("udp:"):
+        ip_port = ip_port.split(":", 1)[1]
+
+    dest = parts[5]
+    if dest.startswith("tcp:") or dest.startswith("udp:"):
+        dest = dest.split(":", 1)[1]
+
+    return dt, utils.strip_port(ip_port), utils.strip_port(dest)
+
+
 
 
 def get_top_target(user_targets) -> list:
@@ -135,7 +135,7 @@ def get_top_target(user_targets) -> list:
         all_targets.extend(targets)
 
     global_top = Counter(all_targets).most_common(N)
-    logger.info(f"\ntop {N} target：")
+    # logger.info(f"\ntop {N} target：")
 
     data = []
     for target, count in global_top:
@@ -144,7 +144,7 @@ def get_top_target(user_targets) -> list:
         if utils.is_ip_address(target):
             asn = utils.get_ip_asn(target)
 
-        logger.info(f"{target} -> {count},  {asn }")
+        # logger.info(f"{target} -> {count},  {asn }")
 
         data.append((target, count, asn.get('Organization') if asn else 'None' ))
 
@@ -164,7 +164,7 @@ def get_top_user(user_targets) -> list:
         data.append((ip, count, loc.get('country') if asn else 'None',
                      loc.get('city') if asn else 'None', asn.get('Organization') if asn else 'None'))
 
-        logger.info(f"{ip} -> {count}, {loc}, {asn}" )
+        # logger.info(f"{ip} -> {count}, {loc}, {asn}" )
 
     return data
 
@@ -191,7 +191,7 @@ def get_top_user_country(user_targets) -> str:
 
     data += f"---------\ntotal:{total_count}/{sum(country_counter.values())}"
 
-    return data, sum(country_counter.values())
+    return data
 
 def get_timeline_image(hourly_counts):
     for hour, count in sorted(hourly_counts.items()):
@@ -210,6 +210,6 @@ if __name__ == "__main__":
     try:
         analyze(log_dir)
     except Exception as e:
-        logger.error(f"err: {e}")
+        logger.exception("err")
 
     logger.info("==========end=============")
