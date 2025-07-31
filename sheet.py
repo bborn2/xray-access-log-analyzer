@@ -1,5 +1,6 @@
 import gspread
 from google.oauth2.service_account import Credentials
+from loguru import logger
 
 
 def update_google_sheet(date, count):
@@ -36,6 +37,8 @@ def update_google_sheet(date, count):
     # 如果未找到，则追加
     if not found:
         sheet.append_row([date, count], value_input_option="USER_ENTERED")
+
+    logger.info("update sheet complete")
 
 if __name__ == "__main__":
 
