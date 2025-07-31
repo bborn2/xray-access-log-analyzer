@@ -1,11 +1,13 @@
-from loguru import logger
-import ipaddress
-import geoip2.database
-from geoip2.errors import AddressNotFoundError
-import socket
-import matplotlib.pyplot as plt
-import re
 import io
+import ipaddress
+import re
+import socket
+
+import geoip2.database
+import matplotlib.pyplot as plt
+from geoip2.errors import AddressNotFoundError
+from loguru import logger
+
 
 def is_ip_address(addr: str) -> bool:
     try:

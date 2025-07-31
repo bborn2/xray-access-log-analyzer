@@ -1,11 +1,12 @@
+import os
 import smtplib
 from email.message import EmailMessage
-import os
-from loguru import logger
 from email.utils import make_msgid
 from io import BytesIO
-from PIL import Image
+
 from dotenv import load_dotenv
+from loguru import logger
+from PIL import Image
 
 load_dotenv() 
 

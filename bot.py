@@ -1,8 +1,9 @@
-import requests
-from loguru import logger
-import os
 import io
+import os
+
+import requests
 from dotenv import load_dotenv
+from loguru import logger
 
 load_dotenv() 
 
