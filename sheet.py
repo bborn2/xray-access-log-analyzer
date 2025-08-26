@@ -42,4 +42,4 @@ def update_google_sheet(date, count):
 
 if __name__ == "__main__":
 
-    update_google_sheet("2025/8/1", 233)
+    update_google_sheet("2025/8/25", 2158)
