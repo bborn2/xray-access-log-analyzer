@@ -23,7 +23,8 @@ def update_google_sheet(date, count):
     # 查找是否已存在
     found = False
     for idx, row in enumerate(all_values):
-        if len(row) > 0 and row[0] == key:
+        if len(row) > 0 and str(row[0]).strip() == str(key).strip():
+            logger.info("equal")
 
             sheet.update(
                 values=[[date, count]],
@@ -42,4 +43,4 @@ def update_google_sheet(date, count):
 
 if __name__ == "__main__":
 
-    update_google_sheet("2025/8/25", 2158)
+    update_google_sheet("2025/08/25", 2158)
